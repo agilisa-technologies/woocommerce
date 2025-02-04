@@ -26,8 +26,20 @@ This plugin allows you to integrate WooCommerce with the Agilpay payment gateway
      - **Title**: The title that customers will see during checkout.
      - **Description**: The description that customers will see during checkout.
      - **Site ID**: Unique website identification provided by Agilpay.
+     - **Site Password**: Password for the Site ID.
      - **Merchant Key**: Merchant identification key provided by Agilpay.
      - **Merchant Name**: Name of the merchant.
+     - **Payment URL**: URL for the payment request (default: `https://sandbox-webpay.agilpay.net/Payment/`).
+     - **Token URL**: URL for the token request (default: `https://sandbox-webapi.agilpay.net/oauth/paymenttoken`).
+
+## Endpoint Configuration
+
+1. **Update the rewrite rules**:
+   - Go to `Settings` > `Permalinks` in the WordPress admin panel.
+   - Click on `Save Changes` to update the rewrite rules.
+
+2. **Configure the response URL in Agilpay**:
+   - Set the response URL in the Agilpay admin panel to `https://your-site.com/?wc-api=agilpay_response`.
 
 ## Usage
 
@@ -40,19 +52,6 @@ This plugin allows you to integrate WooCommerce with the Agilpay payment gateway
    - Once the payment is completed on the Agilpay page, the customer will be redirected back to your WooCommerce site.
    - Verify that the order has been processed correctly in `WooCommerce` > `Orders`.
 
-## Endpoint Configuration
-
-1. **Create the response handler page**:
-   - Create a file named `agilpay-response-handler.php` in your theme or plugin directory with the following content:
-
-
-2. **Update the rewrite rules**:
-   - Go to `Settings` > `Permalinks` in the WordPress admin panel.
-   - Click on `Save Changes` to update the rewrite rules.
-
-3. **Configure the response URL in Agilpay**:
-   - Set the response URL in the Agilpay admin panel to `https://your-site.com/agilpay-response`.
-
 ## Support
 
 If you have any questions or need assistance, please contact Agilpay technical support or refer to the official WooCommerce documentation.
@@ -64,3 +63,9 @@ Contributions are welcome. If you would like to contribute, please open an issue
 ## License
 
 This plugin is licensed under the [GPLv2 License](https://www.gnu.org/licenses/gpl-2.0.html).
+
+
+
+
+
+
