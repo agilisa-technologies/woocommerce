@@ -1,6 +1,6 @@
 # WooCommerce Agilpay Gateway Plugin
 
-This plugin allows you to integrate WooCommerce with the Agilpay payment gateway using a hosted payment page.
+This plugin allows you to integrate WooCommerce with the Agilpay payment gateway using a hosted payment page (/src).
 
 ## Requirements
 
@@ -11,7 +11,7 @@ This plugin allows you to integrate WooCommerce with the Agilpay payment gateway
 ## Installation
 
 1. **Download the plugin**:
-   - Download the plugin file `woocommerce-agilpay.zip` from the repository or create a ZIP file of the plugin folder.
+   - Download the plugin file `woocommerce-agilpay.zip` from the repository or create a ZIP file of the plugin folder (/src).
 
 2. **Upload the plugin**:
    - Go to the WordPress admin panel.
@@ -63,9 +63,12 @@ Contributions are welcome. If you would like to contribute, please open an issue
 ## License
 
 This plugin is licensed under the [GPLv2 License](https://www.gnu.org/licenses/gpl-2.0.html).
+<<<<<<< HEAD
 
 
 
 
 
 
+=======
+>>>>>>> ec5f2677b40a7fab84de7c2885ad3c2ad3a7b1eb
