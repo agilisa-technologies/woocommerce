@@ -63,12 +63,3 @@ Contributions are welcome. If you would like to contribute, please open an issue
 ## License
 
 This plugin is licensed under the [GPLv2 License](https://www.gnu.org/licenses/gpl-2.0.html).
-<<<<<<< HEAD
-
-
-
-
-
-
-=======
->>>>>>> ec5f2677b40a7fab84de7c2885ad3c2ad3a7b1eb
