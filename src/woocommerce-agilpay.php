@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce Agilpay Gateway
 Description: Conector para WooCommerce para el gateway de pago Agilpay.
 Version: 1.0
-Author: Tu Nombre
+Author: Agilisa Technologies
 */
 
 if (!defined('ABSPATH')) {
@@ -21,7 +21,7 @@ function init_agilpay_gateway() {
     class WC_Gateway_Agilpay extends WC_Payment_Gateway {
         public function __construct() {
             $this->id = 'agilpay';
-            $this->icon = ''; // URL del icono del método de pago
+            $this->icon = 'https://agilisa.wpenginepowered.com/wp-content/uploads/2024/01/favicon-150x150.png'; // URL del icono del método de pago
             $this->has_fields = false;
             $this->method_title = 'Agilpay';
             $this->method_description = 'Paga con Agilpay';
