@@ -47,6 +47,7 @@ function init_agilpay_gateway() {
             // Acciones
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
             add_action('woocommerce_receipt_' . $this->id, array($this, 'receipt_page'));
+            add_action('woocommerce_thankyou_' . $this->id, 'receipt_page');
         }
 
         public function init_form_fields() {
@@ -132,24 +133,36 @@ function init_agilpay_gateway() {
                 );
             }
 
+            $redirect_url = add_query_arg(
+                array(
+                    'order_id' => $order_id,
+                    'key'      => $order->get_order_key(),
+                ),
+                get_permalink(get_option('woocommerce_checkout_endpoint'))
+            );
             // Display the form and auto-submit it
             $this->logger->info('Redirecting to Agilpay for order ' . $order_id, array('source' => 'agilpay'));
             echo '<p>Thank you for your order, please wait while we redirect you to Agilpay.</p>';
             echo $form;
             echo '<script type="text/javascript">document.getElementById("agilpay_payment_form").submit();</script>';
 
-            exit;
             // Return success and redirect to the receipt page
-            // return array(
-            //     'result' => 'success',
-            //     'redirect' => $order->get_checkout_order_received_url()
-            // );
-        }
+            return array(
+                'result' => 'success',
+                'redirect' => $order->get_checkout_payment_url(true)
+            );
         }
 
-
-        public function receipt_page($order) {
+        public function receipt_page($order_id) {
+            $order = wc_get_order($order_id);
             $this->logger->info('Displaying receipt page for order ' . $order->get_id(), array('source' => 'agilpay'));
+
+            // Check if the order has already been paid
+            if ($order->get_status() !== 'pending') {
+                $this->logger->info('Order ' . $order->get_id() . ' is not pending. Redirecting to order received page.', array('source' => 'agilpay'));
+                wp_redirect($order->get_checkout_order_received_url());
+                exit;
+            }
 
             if (isset($_GET['agilpay_form'])) {
                 $form = base64_decode($_GET['agilpay_form']);
@@ -157,11 +170,10 @@ function init_agilpay_gateway() {
                 echo $form;
             } else {
                 echo '<p>Thank you for your order, please click the button below to pay with Agilpay.</p>';
-                echo $this->generate_agilpay_form($order);
+                echo $this->generate_agilpay_form($order->get_id());
             }
             echo '<script type="text/javascript">document.getElementById("agilpay_payment_form").submit();</script>';
         }
-
 
         private function get_oauth_token($order) {
             $this->logger->info('Requesting OAuth token for order ' . $order->get_id(), array('source' => 'agilpay'));
