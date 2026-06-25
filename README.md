@@ -38,8 +38,6 @@ This plugin allows you to integrate WooCommerce with the Agilpay payment gateway
    - Go to `Settings` > `Permalinks` in the WordPress admin panel.
    - Click on `Save Changes` to update the rewrite rules.
 
-2. **Configure the response URL in Agilpay**:
-   - Set the response URL in the Agilpay admin panel to `https://your-site.com/?wc-api=agilpay_response`.
 
 ## Usage
 
