@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\\\.\\(md|json|xml|yml|yaml|txt\\)$')",
+      "WebSearch",
+      "WebFetch(domain:developer.woocommerce.com)",
+      "WebFetch(domain:woocommerce.github.io)",
+      "Bash(php -l \"C:/mmedina/payroc/woocommerce/src/woocommerce-agilpay.php\")",
+      "Bash(php -l \"C:/mmedina/payroc/woocommerce/src/agilpay-response-handler.php\")",
+      "Bash(where php:*)"
+    ]
+  }
+}

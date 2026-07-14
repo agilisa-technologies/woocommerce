@@ -2,13 +2,33 @@
 /*
 Plugin Name: WooCommerce Agilpay Gateway
 Description: Conector para WooCommerce para el gateway de pago Agilpay.
-Version: 1.0
+Version: 1.1.0
 Author: Agilisa Technologies
+Requires Plugins: woocommerce
+WC requires at least: 8.2
+WC tested up to: 10.9.4
+Requires at least: 6.0
 */
 
 if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
+
+// Declarar compatibilidad con HPOS y Block Checkout
+add_action('before_woocommerce_init', function() {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+            'custom_order_tables',
+            __FILE__,
+            true
+        );
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+            'cart_checkout_blocks',
+            __FILE__,
+            true
+        );
+    }
+});
 
 // Incluir la clase del gateway de pago
 add_action('plugins_loaded', 'init_agilpay_gateway');
@@ -47,7 +67,7 @@ function init_agilpay_gateway() {
             // Acciones
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
             add_action('woocommerce_receipt_' . $this->id, array($this, 'receipt_page'));
-            add_action('woocommerce_thankyou_' . $this->id, 'receipt_page');
+            add_action('woocommerce_thankyou_' . $this->id, array($this, 'receipt_page'));
         }
 
         public function init_form_fields() {
@@ -133,13 +153,6 @@ function init_agilpay_gateway() {
                 );
             }
 
-            $redirect_url = add_query_arg(
-                array(
-                    'order_id' => $order_id,
-                    'key'      => $order->get_order_key(),
-                ),
-                get_permalink(get_option('woocommerce_checkout_endpoint'))
-            );
             // Display the form and auto-submit it
             $this->logger->info('Redirecting to Agilpay for order ' . $order_id, array('source' => 'agilpay'));
             echo '<p>Thank you for your order, please wait while we redirect you to Agilpay.</p>';
