@@ -152,12 +152,6 @@ function init_agilpay_gateway() {
                 );
             }
 
-            // Display the form and auto-submit it
-            $this->logger->info('Redirecting to Agilpay for order ' . $order_id, array('source' => 'agilpay'));
-            echo '<p>Thank you for your order, please wait while we redirect you to Agilpay.</p>';
-            echo $form;
-            echo '<script type="text/javascript">document.getElementById("agilpay_payment_form").submit();</script>';
-
             // Return success and redirect to the receipt page
             return array(
                 'result' => 'success',
@@ -176,14 +170,8 @@ function init_agilpay_gateway() {
                 exit;
             }
 
-            if (isset($_GET['agilpay_form'])) {
-                $form = base64_decode($_GET['agilpay_form']);
-                echo '<p>Thank you for your order, please wait while we redirect you to Agilpay.</p>';
-                echo $form;
-            } else {
-                echo '<p>Thank you for your order, please click the button below to pay with Agilpay.</p>';
-                echo $this->generate_agilpay_form($order->get_id());
-            }
+            echo '<p>Thank you for your order, please click the button below to pay with Agilpay.</p>';
+            echo $this->generate_agilpay_form($order->get_id());
             echo '<script type="text/javascript">document.getElementById("agilpay_payment_form").submit();</script>';
         }
 
@@ -276,7 +264,7 @@ function init_agilpay_gateway() {
 
             $form = '<form action="' . esc_url($this->payment_url) . '" method="post" id="agilpay_payment_form">';
             foreach ($agilpay_args as $key => $value) {
-                $form .= '<input type="hidden" name="' . esc_attr($key) . '" value=\'' . $value . '\' />';
+                $form .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '" />';
             }
             $form .= '<input type="submit" class="button alt" id="submit_agilpay_payment_form" value="Pay via Agilpay" />';
             $form .= '</form>';
@@ -291,5 +279,46 @@ function init_agilpay_gateway() {
     }
 
     add_filter('woocommerce_payment_gateways', 'add_agilpay_gateway');
+
+    // Registrar integración con WooCommerce Block Checkout
+    add_action('woocommerce_blocks_payment_method_type_registration', function($registry) {
+        if (!class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+            return;
+        }
+
+        class WC_Agilpay_Blocks_Support extends Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType {
+            protected $name = 'agilpay';
+
+            public function initialize() {
+                $this->settings = get_option('woocommerce_agilpay_settings', []);
+            }
+
+            public function is_active() {
+                return filter_var($this->settings['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            }
+
+            public function get_payment_method_script_handles() {
+                wp_register_script(
+                    'wc-agilpay-blocks',
+                    plugin_dir_url(__FILE__) . 'assets/js/agilpay-block.js',
+                    ['wc-blocks-registry', 'wc-settings', 'wp-element'],
+                    '1.1.0',
+                    true
+                );
+                return ['wc-agilpay-blocks'];
+            }
+
+            public function get_payment_method_data() {
+                return [
+                    'title'       => $this->settings['title'] ?? 'Agilpay',
+                    'description' => $this->settings['description'] ?? 'Paga con Agilpay',
+                    'icon'        => 'https://agilisa.wpenginepowered.com/wp-content/uploads/2024/01/favicon-150x150.png',
+                    'supports'    => ['products'],
+                ];
+            }
+        }
+
+        $registry->register(new WC_Agilpay_Blocks_Support());
+    });
 }
 ?>
