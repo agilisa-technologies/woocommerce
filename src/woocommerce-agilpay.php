@@ -2,17 +2,25 @@
 /*
 Plugin Name: WooCommerce Agilpay Gateway
 Description: Conector para WooCommerce para el gateway de pago Agilpay.
-Version: 1.1.0
+Version: 1.2.0
 Author: Agilisa Technologies
 Requires Plugins: woocommerce
 WC requires at least: 8.2
 WC tested up to: 10.9.4
 Requires at least: 6.0
+Requires PHP: 7.4
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 */
 
 if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
+
+// The response handler used to carry its own Plugin Name header, which made
+// WordPress list it as a second plugin. A merchant who activated only the
+// gateway got a checkout that charged the card but never confirmed the order.
+require_once __DIR__ . '/agilpay-response-handler.php';
 
 // Declarar compatibilidad con HPOS y Block Checkout
 add_action('before_woocommerce_init', function() {
@@ -132,6 +140,27 @@ function init_agilpay_gateway() {
                     'default' => 'https://sandbox-webapi.agilpay.net/oauth/paymenttoken',
                     'desc_tip' => true,
                 ),
+                'hash_secret' => array(
+                    'title' => 'Hash Secret (optional)',
+                    'type' => 'password',
+                    'description' => 'Client_Secret used to validate the MessageHash returned by the hosted page. Leave empty to reuse the Site Password.',
+                    'default' => '',
+                    'desc_tip' => true,
+                ),
+                'webhook_enabled' => array(
+                    'title' => 'Authoritative webhook',
+                    'type' => 'checkbox',
+                    'label' => 'Settle orders from the server-to-server webhook only',
+                    'description' => 'Recommended. The hosted page POST travels through the customer browser and its hash does not cover the response code, so it cannot prove a payment was approved. Enable this only after Agilpay is configured to call ' . home_url( '/wc-api/agilpay_webhook' ) . ' with your API key.',
+                    'default' => 'no',
+                ),
+                'webhook_api_key' => array(
+                    'title' => 'Webhook API Key',
+                    'type' => 'password',
+                    'description' => 'Pre-shared key Agilpay sends in the x-api-key header of the server-to-server webhook.',
+                    'default' => '',
+                    'desc_tip' => true,
+                ),
             );
         }
 
@@ -152,6 +181,13 @@ function init_agilpay_gateway() {
                 );
             }
 
+            // Nothing is echoed here on purpose. WooCommerce calls
+            // process_payment() over AJAX and expects a JSON body, so any
+            // output corrupts the response. The form above was built only to
+            // confirm a token can be obtained before sending the customer on;
+            // receipt_page() renders and submits the real one.
+            $this->logger->info('Redirecting to Agilpay for order ' . $order_id, array('source' => 'agilpay'));
+
             // Return success and redirect to the receipt page
             return array(
                 'result' => 'success',
@@ -170,7 +206,11 @@ function init_agilpay_gateway() {
                 exit;
             }
 
-            echo '<p>Thank you for your order, please click the button below to pay with Agilpay.</p>';
+            // The form is always rebuilt server-side. It was previously also
+            // accepted base64-encoded from $_GET, which nothing ever set and
+            // which echoed attacker-controlled markup straight to the page.
+            // The form auto-submits below; the button is the no-JavaScript path.
+            echo '<p>Thank you for your order, please wait while we redirect you to Agilpay.</p>';
             echo $this->generate_agilpay_form($order->get_id());
             echo '<script type="text/javascript">document.getElementById("agilpay_payment_form").submit();</script>';
         }
@@ -185,8 +225,9 @@ function init_agilpay_gateway() {
                 'customerId' => $order->get_user_id() ? $order->get_user_id() : $order->get_billing_email(),
                 'amount' => $order->get_total()
             ));
+            // Never log $body: it carries client_secret in cleartext, and
+            // WooCommerce logs are plain files under wp-content/uploads.
             $this->logger->info('OAuth token request URL: ' . $this->token_url, array('source' => 'agilpay'));
-            $this->logger->info('OAuth token request body: ' . $body, array('source' => 'agilpay'));
             $response = wp_remote_post($this->token_url, array(
                 'body' => $body,
                 'timeout' => 45,
@@ -264,6 +305,9 @@ function init_agilpay_gateway() {
 
             $form = '<form action="' . esc_url($this->payment_url) . '" method="post" id="agilpay_payment_form">';
             foreach ($agilpay_args as $key => $value) {
+                // esc_attr() encodes the quotes inside the JSON Detail payload;
+                // the browser decodes them back before POSTing, so the value
+                // Agilpay receives is unchanged.
                 $form .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '" />';
             }
             $form .= '<input type="submit" class="button alt" id="submit_agilpay_payment_form" value="Pay via Agilpay" />';
@@ -302,7 +346,7 @@ function init_agilpay_gateway() {
                     'wc-agilpay-blocks',
                     plugin_dir_url(__FILE__) . 'assets/js/agilpay-block.js',
                     ['wc-blocks-registry', 'wc-settings', 'wp-element'],
-                    '1.1.0',
+                    '1.2.0',
                     true
                 );
                 return ['wc-agilpay-blocks'];
@@ -321,4 +365,3 @@ function init_agilpay_gateway() {
         $registry->register(new WC_Agilpay_Blocks_Support());
     });
 }
-?>
